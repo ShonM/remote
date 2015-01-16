@@ -83,7 +83,14 @@ class SecLibGateway implements GatewayInterface {
 	 */
 	public function connect($username)
 	{
-		return $this->getConnection()->login($username, $this->getAuthForLogin());
+		$auth = $this->getAuthForLogin();
+		$connection = $this->getConnection()->login($username, $auth);
+
+		if ($this->useAgentForward()) {
+			$auth->startSSHForwarding($this->getConnection());
+		}
+
+		return $connection;
 	}
 
 	/**
@@ -258,11 +265,11 @@ class SecLibGateway implements GatewayInterface {
 
 	/*
 	 * Determine if the SSH Agent should provide authentication forwarding
-	 * 
+	 *
 	 * @return bool
 	 */
-	protected function useAgentForward() 
-	{	
+	protected function useAgentForward()
+	{
 		return isset($this->auth['agent-forward']) && $this->auth['agent-forward'] == true;
 	}
 
@@ -273,7 +280,7 @@ class SecLibGateway implements GatewayInterface {
 	 */
 	public function getAgent()
 	{
-		return new System_SSH_Agent($this->useAgentForward());;
+		return new System_SSH_Agent();
 	}
 
 	/**
